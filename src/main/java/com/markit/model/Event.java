@@ -22,6 +22,11 @@ public class Event {
     }
 
     // Getters and Setters
+        private long pinExpiresAt;
+
+    public long getPinExpiresAt() { return pinExpiresAt; }
+    public void setPinExpiresAt(long pinExpiresAt) { this.pinExpiresAt = pinExpiresAt; }
+    
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
