@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MarkiT Organizer Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            srm: { 50: '#eff6ff', 100: '#dbeafe', 700: '#1d4ed8', 800: '#1e40af', 900: '#102a63' }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+
+<!-- Header -->
+<header class="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      <div class="grid h-10 w-10 place-items-center rounded-xl bg-srm-900 text-lg font-black text-white shadow-sm">M</div>
+      <div>
+        <h1 class="text-lg font-bold text-srm-900 leading-none">MarkiT</h1>
+        <p class="text-xs text-slate-500">Organizer Dashboard</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <p class="text-xs font-bold uppercase tracking-wider text-srm-700">Organizer Console</p>
+    <h2 class="mt-1 text-3xl font-black tracking-tight text-srm-900">Create & Monitor Seminar</h2>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="grid gap-8 lg:grid-cols-3">
+    
+    <!-- Left Column: Create Event Form -->
+    <aside class="space-y-6 lg:col-span-1">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all">
+        <div class="mb-5 border-b border-slate-100 pb-4">
+          <h3 class="text-lg font-extrabold text-srm-900">Create Event</h3>
+          <p class="text-xs text-slate-500">Generate a live session for check-in</p>
+        </div>
+
+        <form id="event-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Event Name</label>
+            <input name="name" required class="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-srm-700 focus:ring-2 focus:ring-srm-100" placeholder="e.g. Annual Tech Symposium">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Venue</label>
+            <input name="venue" required class="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-srm-700 focus:ring-2 focus:ring-srm-100" placeholder="e.g. Main Auditorium">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Check-in Duration (Minutes)</label>
+            <input name="duration" type="number" min="1" max="180" value="10" required class="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-srm-700 focus:ring-2 focus:ring-srm-100">
+          </div>
+
+          <button class="mt-2 w-full rounded-xl bg-srm-700 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-srm-800 active:scale-[0.98]">
+            Create Event
+          </button>
+        </form>
+
+        <p id="event-message" class="mt-4 hidden rounded-xl p-3 text-xs font-semibold"></p>
+      </section>
+    </aside>
+
+    <!-- Right Column: Active Event Dashboard & Attendance -->
+    <section class="space-y-6 lg:col-span-2">
+      
+      <!-- Active Event Details -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Session</span>
+            <h3 id="event-name" class="mt-1 text-2xl font-black text-srm-900">No active event</h3>
+            <p id="event-meta" class="mt-0.5 text-xs text-slate-500">Create an event using the panel on the left to start receiving check-ins.</p>
+          </div>
+          <span id="event-status" class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+            Inactive
+          </span>
+        </div>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          <!-- Live PIN Display -->
+          <div class="flex flex-col justify-between rounded-2xl bg-srm-900 p-6 text-white shadow-inner">
+            <p class="text-xs font-bold uppercase tracking-widest text-srm-100">Live Check-in PIN</p>
+            <div class="my-4">
+              <p id="event-pin" class="text-5xl font-black tracking-[0.2em] font-mono">----</p>
+            </div>
+            <p id="countdown" class="text-xs font-medium text-slate-300">No active countdown</p>
+          </div>
+
+          <!-- QR Code Display -->
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center">
+            <img id="qr" class="hidden h-36 w-36 rounded-lg bg-white p-2 shadow-sm" alt="Student check-in QR code">
+            <p id="qr-empty" class="text-xs font-medium text-slate-400">QR Code will generate automatically once event starts.</p>
+          </div>
+        </div>
+
+        <!-- Action Links & URL Display -->
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button id="copy-link" disabled class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-40 transition">
+            Copy Student Link
+          </button>
+          <button id="export" disabled class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition">
+            Download Attendance CSV
+          </button>
+        </div>
+        <p id="student-link" class="mt-3 break-all text-xs font-mono text-slate-400"></p>
+      </div>
+
+      <!-- Attendance Table -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-lg font-extrabold text-srm-900">Live Attendance</h3>
+            <p class="text-xs text-slate-500">Sorted automatically by Year, Department, and Section.</p>
+          </div>
+          <span id="attendance-count" class="rounded-full bg-srm-50 px-3 py-1 text-xs font-bold text-srm-700">
+            0 checked in
+          </span>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-4 py-3">Email ID</th>
+                <th class="px-4 py-3">Reg No</th>
+                <th class="px-4 py-3">Name</th>
+                <th class="px-4 py-3">Year</th>
+                <th class="px-4 py-3">Department</th>
+                <th class="px-4 py-3">Section</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-body" class="divide-y divide-slate-100 text-xs"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<script>
+let eventData = null, currentAttendance = [], timer;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sortRows = (a, b) => String(a.year || '').localeCompare(String(b.year || ''), undefined, { numeric: true }) || 
+                           String(a.department || '').localeCompare(String(b.department || '')) || 
+                           String(a.section || '').localeCompare(String(b.section || '')) || 
+                           String(a.email || '').localeCompare(String(b.email || ''));
+const fmt = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+
+function msg(node, text, error = false) {
+  node.hidden = false;
+  node.textContent = text;
+  node.className = 'mt-3 rounded-xl p-3 text-xs font-semibold ' + (error ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200');
+}
+
+function renderAttendance(list = []) {
+  currentAttendance = list;
+  const rows = [...list].sort(sortRows);
+  $('attendance-count').textContent = `${rows.length} checked in`;
+  $('attendance-body').innerHTML = rows.length ? rows.map(r => `
+    <tr class="hover:bg-slate-50/80 transition">
+      <td class="px-4 py-3 font-medium text-slate-900">${esc(r.email)}</td>
+      <td class="px-4 py-3 text-slate-600">${esc(r.regNo)}</td>
+      <td class="px-4 py-3 font-medium text-slate-800">${esc(r.name)}</td>
+      <td class="px-4 py-3 text-slate-600">${esc(r.year)}</td>
+      <td class="px-4 py-3 text-slate-600">${esc(r.department)}</td>
+      <td class="px-4 py-3 text-slate-600">${esc(r.section)}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-xs font-medium text-slate-400">No student check-ins recorded yet.</td></tr>';
+}
+
+function studentUrl() {
+  return `${window.location.origin}/index.html?event=${encodeURIComponent(eventData?.id || '')}`;
+}
+
+function updateTimer() {
+  if (!eventData) return;
+  const left = Math.max(0, eventData.expiresAt - Date.now());
+  if (!left) {
+    $('event-pin').textContent = '----'; 
+    $('countdown').textContent = 'Expired — PIN disabled';
+    $('event-status').textContent = 'Expired'; 
+    $('event-status').className = 'inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 border border-red-200';
+    clearInterval(timer); 
+    return;
+  }
+  $('event-pin').textContent = eventData.pin;
+  $('countdown').textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left % 60000 / 1000)).padStart(2, '0')} remaining`;
+  $('event-status').textContent = 'Live'; 
+  $('event-status').className = 'inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200';
+}
+
+function renderEvent(attendance = []) {
+  if (!eventData) { 
+    renderAttendance([]); 
+    return; 
+  }
+  $('event-name').textContent = eventData.name;
+  $('event-meta').textContent = `${eventData.venue} · ${eventData.duration} min duration · Created at ${fmt(eventData.createdAt)}`;
+  const url = studentUrl();
+  $('student-link').textContent = url;
+  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(url);
+  $('qr').classList.remove('hidden'); 
+  $('qr-empty').classList.add('hidden');
+  $('copy-link').disabled = false; 
+  $('export').disabled = false;
+  updateTimer(); 
+  clearInterval(timer); 
+  timer = setInterval(updateTimer, 1000);
+  renderAttendance(attendance);
+}
+
+$('event-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(e.target));
+  try {
+    const res = await fetch('/api/create-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f.name.trim(), venue: f.venue.trim(), duration: Number(f.duration) })
+    });
+    const data = await res.json();
+    if (data.success) {
+      eventData = data.event;
+      renderEvent([]);
+      msg($('event-message'), `Event "${eventData.name}" created successfully!`);
+    }
+  } catch (err) {
+    msg($('event-message'), `Failed to create event: ${err.message}`, true);
+  }
+};
+
+$('export').onclick = () => {
+  if (!currentAttendance || !currentAttendance.length) {
+    alert("No attendance records to export yet.");
+    return;
+  }
+  const rows = [
+    ['Email ID', 'Reg No', 'Name', 'Year', 'Department', 'Section', 'Checked In At'],
+    ...[...currentAttendance].sort(sortRows).map(r => [
+      r.email, r.regNo, r.name, r.year, r.department, r.section, fmt(r.at || Date.now())
+    ])
+  ];
+  const csv = rows.map(r => r.map(v => '"' + String(v ?? '').replaceAll('"', '""') + '"').join(',')).join('\r\n') + '\r\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `${eventData ? eventData.id : 'Attendance'}-report.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$('copy-link').onclick = async () => {
+  await navigator.clipboard?.writeText(studentUrl());
+  $('copy-link').textContent = 'Link copied!';
+  setTimeout(() => $('copy-link').textContent = 'Copy Student Link', 1500);
+};
+
+async function fetchStatus() {
+  try {
+    const res = await fetch('/api/event-status');
+    const data = await res.json();
+    if (data.event) {
+      eventData = data.event;
+      renderEvent(data.attendance || []);
+    }
+  } catch (err) { 
+    console.error('Status fetch error', err); 
+  }
+}
+
+setInterval(fetchStatus, 2000);
+fetchStatus();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MarkiT Student Check-in</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={theme:{extend:{colors:{srm:{50:'#eff6ff',100:'#dbeafe',700:'#1d4ed8',900:'#102a63'}}}}};</script></head>
+<body class="min-h-screen bg-slate-50 text-slate-900"><main class="mx-auto max-w-xl px-4 py-8 sm:py-14"><div class="mb-8 text-center"><div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-srm-900 text-2xl font-black text-white">M</div><h1 class="mt-4 text-3xl font-black tracking-tight text-srm-900">MarkiT Student Check-in</h1><p id="event-route" class="mt-2 text-slate-600">Sign in to mark seminar attendance.</p></div>
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 class="text-xl font-extrabold text-srm-900">Student verification</h2><p class="mt-1 text-sm text-slate-500">Use your @srm.edu.in email or registration number.</p><form id="auth-form" class="mt-5 space-y-4"><label class="block text-sm font-bold text-slate-700">Email ID or Registration Number<input id="identity" required class="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-srm-700" placeholder="student@srm.edu.in or RA2311001"></label><button class="w-full rounded-xl bg-srm-700 px-4 py-3 font-bold text-white hover:bg-srm-900">Find my profile</button></form><p id="auth-error" class="mt-3 hidden rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700"></p></section>
+<section id="profile-card" class="mt-5 hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 class="text-xl font-extrabold text-srm-900">Your roster profile</h2><div id="profile" class="mt-4 rounded-xl bg-srm-50 p-4"></div></section>
+<section id="checkin-card" class="mt-5 hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div class="flex items-start justify-between gap-3"><div><h2 class="text-xl font-extrabold text-srm-900">Enter event PIN</h2><p id="event-details" class="mt-1 text-sm text-slate-500"></p></div><span id="timer" class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"></span></div><label class="mt-5 block text-sm font-bold text-slate-700">Event ID<input id="event-id" class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-3 text-slate-600"></label><form id="pin-form" class="mt-5"><label class="block text-sm font-bold text-slate-700">4-digit PIN<input id="pin" required maxlength="4" pattern="[0-9]{4}" inputmode="numeric" class="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-4 text-center text-3xl font-black tracking-[.35em] outline-none focus:border-srm-700" placeholder="0000"></label><button class="mt-4 w-full rounded-xl bg-srm-700 px-4 py-3 font-bold text-white hover:bg-srm-900">Mark attendance</button></form><p id="pin-error" class="mt-3 hidden rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700"></p></section>
+<section id="success" class="mt-5 hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-6"><div class="flex items-center gap-3"><div class="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-2xl text-white">✓</div><div><h2 class="font-black text-emerald-900">Attendance Marked Successfully!</h2><p id="success-text" class="text-sm text-emerald-800"></p></div></div></section><section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 class="text-xl font-extrabold text-srm-900">My Seminar History</h2><div id="history" class="mt-4 space-y-3"></div></section></main>
+<script>
+const ACTIVE='active_event',ROSTER='srm_roster',HISTORY='markit_student_history';
+const DEFAULT_ROSTER=[
+ ['pranav.singh@srm.edu.in','RA2311001','Pranav Singh','3rd Year','CSE','A'],
+ ['aarav.sharma@srm.edu.in','RA2311002','Aarav Sharma','3rd Year','CSE','A'],
+ ['diya.iyer@srm.edu.in','RA2311003','Diya Iyer','3rd Year','ECE','B'],
+ ['tanvi.kulkarni@srmist.edu.in','RA211041101004','Tanvi Kulkarni','1st Year','AI & ML','B'],
+ ['ruchi.naidu@srmist.edu.in','RA211041101005','Ruchi Naidu','4th Year','Mechanical','D'],
+ ['tara.shah@srmist.edu.in','RA211041101006','Tara Shah','1st Year','EEE','D'],
+ ['meera.shah@srmist.edu.in','RA211041101007','Meera Shah','2nd Year','Mechanical','C'],
+ ['arjun.nair@srmist.edu.in','RA211041101008','Arjun Nair','4th Year','ECE','C'],
+ ['rohan.venkatesh@srmist.edu.in','RA211041101009','Rohan Venkatesh','3rd Year','CSE','D'],
+ ['varun.singh@srmist.edu.in','RA211041101010','Varun Singh','4th Year','ECE','E'],
+ ['atharva.prasad@srmist.edu.in','RA211041101011','Atharva Prasad','3rd Year','Mechanical','A'],
+ ['aditya.tripathi@srmist.edu.in','RA211041101012','Aditya Tripathi','2nd Year','Biotechnology','A'],
+ ['ishaan.gupta@srmist.edu.in','RA211041101013','Ishaan Gupta','4th Year','Biotechnology','D'],
+ ['pranav.roy@srmist.edu.in','RA211041101014','Pranav Roy','2nd Year','IT','C'],
+ ['tanvi.tripathi@srmist.edu.in','RA211041101015','Tanvi Tripathi','3rd Year','ECE','E'],
+ ['pranav.rao@srmist.edu.in','RA211041101016','Pranav Rao','2nd Year','EEE','D'],
+ ['vivaan.shah@srmist.edu.in','RA211041101017','Vivaan Shah','2nd Year','IT','A'],
+ ['ishaan.patel@srmist.edu.in','RA211041101018','Ishaan Patel','3rd Year','Civil','C'],
+ ['vihaan.banerjee@srmist.edu.in','RA211041101019','Vihaan Banerjee','3rd Year','Mechanical','D'],
+ ['priya.naidu@srmist.edu.in','RA211041101020','Priya Naidu','4th Year','EEE','C'],
+ ['sai.deshmukh@srmist.edu.in','RA211041101021','Sai Deshmukh','3rd Year','Civil','E'],
+ ['priya.roy@srmist.edu.in','RA211041101022','Priya Roy','2nd Year','EEE','E'],
+ ['swati.nair@srmist.edu.in','RA211041101023','Swati Nair','1st Year','ECE','B'],
+ ['divya.saxena@srmist.edu.in','RA211041101024','Divya Saxena','1st Year','Civil','D'],
+ ['nikhil.malhotra@srmist.edu.in','RA211041101025','Nikhil Malhotra','3rd Year','AI & ML','A'],
+ ['divya.dhar@srmist.edu.in','RA211041101026','Divya Dhar','1st Year','AI & ML','C'],
+ ['avani.naidu@srmist.edu.in','RA211041101027','Avani Naidu','3rd Year','ECE','C'],
+ ['shruti.rao@srmist.edu.in','RA211041101028','Shruti Rao','4th Year','CSE','C'],
+ ['yash.dutta@srmist.edu.in','RA211041101029','Yash Dutta','2nd Year','AI & ML','A'],
+ ['pranav.bhat@srmist.edu.in','RA211041101030','Pranav Bhat','2nd Year','EEE','C'],
+ ['siddharth.rao@srmist.edu.in','RA211041101031','Siddharth Rao','1st Year','IT','D'],
+ ['ananya.singh@srmist.edu.in','RA211041101032','Ananya Singh','3rd Year','Biotechnology','B'],
+ ['diya.deshmukh@srmist.edu.in','RA211041101033','Diya Deshmukh','1st Year','ECE','D'],
+ ['vihaan.dutta@srmist.edu.in','RA211041101034','Vihaan Dutta','2nd Year','EEE','D'],
+ ['simran.rao@srmist.edu.in','RA211041101035','Simran Rao','3rd Year','AI & ML','E'],
+ ['shruti.banerjee@srmist.edu.in','RA211041101036','Shruti Banerjee','2nd Year','Biotechnology','D'],
+ ['harsh.naidu@srmist.edu.in','RA211041101037','Harsh Naidu','3rd Year','Data Science','E'],
+ ['karan.singh@srmist.edu.in','RA211041101038','Karan Singh','2nd Year','Mechanical','A'],
+ ['meera.verma@srmist.edu.in','RA211041101039','Meera Verma','2nd Year','Mechanical','A'],
+ ['vihaan.dube@srmist.edu.in','RA211041101040','Vihaan Dube','1st Year','Mechanical','A'],
+ ['aditya.menon@srmist.edu.in','RA211041101041','Aditya Menon','1st Year','AI & ML','B'],
+ ['neha.tripathi@srmist.edu.in','RA211041101042','Neha Tripathi','4th Year','Mechanical','E'],
+ ['sai.dhar@srmist.edu.in','RA211041101043','Sai Dhar','4th Year','Mechanical','D'],
+ ['rahul.das@srmist.edu.in','RA211041101044','Rahul Das','1st Year','ECE','D'],
+ ['rohan.saxena@srmist.edu.in','RA211041101045','Rohan Saxena','4th Year','Data Science','A'],
+ ['divya.naidu@srmist.edu.in','RA211041101046','Divya Naidu','1st Year','CSE','D'],
+ ['akash.menon@srmist.edu.in','RA211041101047','Akash Menon','1st Year','Mechanical','B'],
+ ['krishna.shetty@srmist.edu.in','RA211041101048','Krishna Shetty','4th Year','EEE','D'],
+ ['anika.shah@srmist.edu.in','RA211041101049','Anika Shah','4th Year','Mechanical','A'],
+ ['karan.nambiar@srmist.edu.in','RA211041101050','Karan Nambiar','1st Year','CSE','E']
+].map(([email,regNo,name,year,department,section])=>({email,regNo,name,year,department,section}));
+const savedRoster=JSON.parse(localStorage.getItem(ROSTER)||'[]');let roster=savedRoster.length?savedRoster:DEFAULT_ROSTER,eventData=JSON.parse(localStorage.getItem(ACTIVE)||'null'),student=null,timer;const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),fmt=t=>new Date(t).toLocaleString([], {dateStyle:'medium',timeStyle:'short'});const params=new URLSearchParams(window.location.search);let eventId=params.get('event')||'';
+function msg(node,text,error=false){node.hidden=false;node.textContent=text;node.className='mt-3 rounded-xl p-3 text-sm font-semibold '+(error?'bg-red-50 text-red-700':'bg-emerald-50 text-emerald-700');}function isActive(){return eventData&&Date.now()<eventData.expiresAt;}function lookup(value){const q=value.trim().toLowerCase();const matches=r=>r.email?.toLowerCase()===q||r.regNo?.toLowerCase()===q;return roster.find(matches)||DEFAULT_ROSTER.find(matches);}
+function showProfile(){if(!student)return;$('profile-card').classList.remove('hidden');$('profile').innerHTML=`<p class="font-black text-srm-900">${esc(student.name)}</p><p class="mt-1 text-sm text-slate-600">${esc(student.email)}<br>${esc(student.regNo)} · ${esc(student.year)} · ${esc(student.department)} · Section ${esc(student.section)}</p>`;$('checkin-card').classList.remove('hidden');$('event-details').textContent=eventData?`${eventData.name} · ${eventData.venue}`:'Event unavailable';updateTimer();$('pin').focus();}
+function updateTimer(){if(!eventData)return;const left=Math.max(0,eventData.expiresAt-Date.now());if(!left){$('timer').textContent='Expired';$('timer').className='rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700';clearInterval(timer);return;}$('timer').textContent=`${Math.floor(left/60000)}:${String(Math.floor(left%60000/1000)).padStart(2,'0')} remaining`;}
+function renderHistory(){const history=JSON.parse(localStorage.getItem(HISTORY)||'[]').filter(h=>h.email===student?.email);$('history').innerHTML=history.length?history.sort((a,b)=>b.at-a.at).map(h=>`<div class="rounded-xl border border-slate-200 bg-slate-50 p-3"><p class="font-bold text-slate-800">${esc(h.eventName)}</p><p class="text-sm text-slate-500">${esc(h.venue)} · ${fmt(h.at)}</p></div>`).join(''):'<p class="text-sm text-slate-500">No attendance records yet.</p>';}
+$('event-id').value=eventId;if(eventId){eventData=eventData&&eventData.id===eventId?eventData:null;$('event-route').textContent=eventData?`Checking in to ${eventData.name}`:'The requested event is not available in this browser.';}
+$('auth-form').onsubmit=e=>{e.preventDefault();const value=$('identity').value.trim(),email=value.toLowerCase();if(value.includes('@')&&!email.endsWith('@srm.edu.in'))return msg($('auth-error'),'Only @srm.edu.in email addresses are allowed.',true);student=lookup(value);if(!student)return msg($('auth-error'),'No matching student was found in the loaded SRM roster.',true);$('auth-form').classList.add('hidden');showProfile();renderHistory();};
+ $('pin-form').onsubmit=e=>{e.preventDefault();if(!student)return msg($('pin-error'),'Verify your student profile first.',true);const requestedId=$('event-id').value.trim(),enteredPin=$('pin').value.trim();if(!requestedId)return msg($('pin-error'),'Enter an Event ID before submitting the PIN.',true);if(!/^\d{4}$/.test(enteredPin))return msg($('pin-error'),'PIN must contain exactly 4 digits.',true);eventId=requestedId;if(!eventData||eventData.id!==requestedId){const now=Date.now();eventData={id:requestedId,name:'Prototype Event',venue:'Local demonstration',duration:10,pin:enteredPin,createdAt:now,expiresAt:now+600000,checkins:[]};localStorage.setItem(ACTIVE,JSON.stringify(eventData));}else{if(!isActive())return msg($('pin-error'),'The check-in timer has expired.',true);if(enteredPin!==eventData.pin)return msg($('pin-error'),'Incorrect event PIN.',true);}if(!isActive())return msg($('pin-error'),'The check-in timer has expired.',true);if(eventData.checkins.some(r=>r.email===student.email))return msg($('pin-error'),'Your attendance is already recorded for this event.',true);const record={...student,eventId:eventData.id,eventName:eventData.name,venue:eventData.venue,at:Date.now()};eventData.checkins.push(record);localStorage.setItem(ACTIVE,JSON.stringify(eventData));const history=JSON.parse(localStorage.getItem(HISTORY)||'[]');history.push(record);localStorage.setItem(HISTORY,JSON.stringify(history));$('checkin-card').classList.add('hidden');$('success').classList.remove('hidden');$('success-text').textContent=`${eventData.name} · ${fmt(record.at)}`;renderHistory();};
+document.addEventListener('DOMContentLoaded',()=>{if(params.get('event')){$('event-id').value=params.get('event');eventId=params.get('event');$('pin').focus();}if(eventData){timer=setInterval(updateTimer,1000);updateTimer();}renderHistory();});
+</script>
+<script>
+async function loadServerEvent() {
+  try {
+    const res = await fetch('/api/event-status');
+    const data = await res.json();
+    if (data.event) {
+      eventData = data.event;
+      $('event-details').textContent = `${eventData.name} · ${eventData.venue}`;
+      if (eventData.id) $('event-id').value = eventData.id;
+    }
+  } catch (err) {
+    msg($('pin-error'), 'Could not fetch active event from server.', true);
+  }
+}
+
+$('pin-form').onsubmit = async e => {
+  e.preventDefault();
+  if (!student) return msg($('pin-error'), 'Verify profile first.', true);
+  const enteredPin = $('pin').value.trim();
+  try {
+    const res = await fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...student, pin: enteredPin })
+    });
+    const data = await res.json();
+    if (!res.ok) return msg($('pin-error'), data.error || 'Check-in failed.', true);
+    
+    $('checkin-card').classList.add('hidden');
+    $('success').classList.remove('hidden');
+    $('success-text').textContent = `Attendance recorded for ${data.record.email}`;
+  } catch (err) {
+    msg($('pin-error'), `Check-in server error: ${err.message}`, true);
+  }
+};
+
+loadServerEvent();
+</script>
+</body></html>
