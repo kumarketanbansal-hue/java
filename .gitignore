@@ -1,0 +1,16 @@
+.vscode/
+previous/
+target/
+*.class
+*.jar
+*.log
+.DS_Store
+node_modules/
+
+# Ignore root-level prototype/Node files
+package.json
+server.js
+markit_srmist_attendance_prototype.html
+srmist_students_v2.csv
+index.html
+organizer.html
